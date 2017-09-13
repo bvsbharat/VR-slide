@@ -1,0 +1,19 @@
+{
+  "API": {
+    "url": "http://localhost",
+    "port": 4000
+  },
+  "client": {
+    "url": "http://localhost",
+    "port": 4000
+  },
+  "app": {
+    "tweet": {
+      "numberPerRequest": 60
+    },
+    "lang": "en"
+  },
+  "production": {
+    "API_URL": "https://tweetscape.herokuapp.com"
+  }
+}

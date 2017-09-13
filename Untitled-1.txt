@@ -1,0 +1,1 @@
+<a-gradient-sky material="shader: gradient; topColor: 2 25 65; bottomColor: 2 20 50;"></a-gradient-sky>

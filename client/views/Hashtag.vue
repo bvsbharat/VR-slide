@@ -1,0 +1,310 @@
+<template>
+  <div class="view-hashtag">   
+    <preloader :display="isLoading"></preloader>
+  </div>
+
+
+</template>
+
+<script>
+  import Preloader from 'components/Preloader'
+  import {
+    getTweetsFromAPI
+  } from 'store/api'
+
+  export default {
+    name: 'Hashtag',
+    data() {
+      return {
+        requestError: {
+          message: '',
+          show: false
+        },
+        waitingResponseFromAPI: false,
+        userHashtag: '',
+        isLoading: false,
+        inputMaxLength: 40
+      }
+    },
+    components: {
+      Preloader
+    },
+    computed: {
+      isHashtag: function () {
+        const regex = /^\w{1,100}$/
+        return regex.test(this.userHashtag)
+      },
+      gradientCanvas: function () {
+        return this.$store.state.gradients.find(function (item) {
+          return item.name === 'canvas-interactive'
+        })
+      },
+      inputWidthStyle() {
+        return `width: ${(this.userHashtag.length + 2)*0.8}rem;`
+      }
+    },
+    methods: {
+      start: function () {
+        this.waitingResponseFromAPI = true
+
+        this.$store.dispatch('setHashtag', this.userHashtag)
+        this.userHashtag = 'asasdda'
+
+        getTweetsFromAPI()
+          .then(() => {
+              this.isLoading = true
+              this.gradientCanvas.gradient.changeState('timeline-state')
+              this.startLoader()
+                .then(() => {
+                  this.$store.dispatch('sortTweetsByDate')
+                  setTimeout(() => {
+                    this.goToTimeline()
+                  }, 3 * 1000)
+                })
+            },
+            (response) => {
+              if (response.error == -1) {
+                this.requestError.message = 'Your hashtag seems to be not very famous'
+              } else {
+                this.requestError.message =
+                  'Problem when connecting to the twitter API. The Twitter API throttling being pretty heavy, you might have to try again later. Sorry!'
+              }
+
+              setTimeout(() => {
+                this.requestError.show = true
+              }, 1 * 1000)
+              setTimeout(() => {
+                this.requestError.show = false
+              }, 3 * 1000)
+              setTimeout(() => {
+                this.waitingResponseFromAPI = false
+              }, 4 * 1000)
+            })
+      },
+      startLoader: function () {
+        return new Promise((resolve, reject) => {
+          this.$store.dispatch('showPreloader', true)
+          setTimeout(() => {
+            resolve()
+          }, 3 * 1000)
+        })
+      },
+      goToTimeline: function () {
+        this.$store.dispatch('showPreloader', false)
+        setTimeout(() => {
+          this.isLoading = false
+          this.$router.push({
+            path: '/timeline'
+          })
+        }, 1 * 2000)
+      },
+      focusToInput: function () {
+        
+        this.start();
+      }
+    },
+    mounted() {
+
+      if (this.gradientCanvas) {
+        this.gradientCanvas.gradient.changeState('home-state')
+      }
+
+
+      if (window.innerWidth < 640) {
+        this.inputMaxLength = 20
+      } else {
+        this.inputMaxLength = 40
+      }
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth < 640) {
+          this.inputMaxLength = 20
+        } else {
+          this.inputMaxLength = 40
+        }
+      });
+
+      this.focusToInput()
+      // redirect to hashtag view     
+
+
+    }
+  }
+
+</script>
+
+<style lang="scss" scoped>
+  .view-hashtag {
+
+    .content {
+      width: 40rem;
+      height: 20rem;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      margin-left: -20rem;
+      margin-top: -10rem;
+      color: #FFFFFF;
+      opacity: 1;
+      -webkit-transition: all .6s ease-in-out;
+      -moz-transition: all .6s ease-in-out;
+      -o-transition: all .6s ease-in-out;
+      transition: all .6s ease-in-out;
+
+      #logo {
+        width: 100%;
+        height: auto;
+
+        img {
+          display: block;
+          width: calc(30rem - 25rem);
+          margin: 0 auto;
+        }
+      }
+
+      .title {
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 500;
+        letter-spacing: 0.3rem;
+        text-transform: uppercase;
+      }
+
+      .select-your-hashtag {
+        text-align: center;
+        vertical-align: middle;
+
+        .search-hashtag {
+
+          .hashtag-input {
+
+            font-size: 1.2rem;
+
+            span {
+              margin-left: 1rem;
+              padding-right: 1rem;
+            }
+
+            input[type="password"] {
+              border-radius: 0;
+              border: none;
+              background: none;
+              color: #FFFFFF;
+              font-size: 1rem;
+              font-weight: 100;
+              letter-spacing: 0.2rem;
+              outline: none;
+              width: 1rem;
+              height: 5rem;
+              text-align: left;
+            }
+
+            input,
+            input:before,
+            input:after {
+              user-drag: initial;
+              user-select: initial;
+              -moz-user-select: initial;
+              -webkit-user-drag: initial;
+              -webkit-user-select: initial;
+              -ms-user-select: initial;
+            }
+          }
+        }
+
+        #start {
+          outline: none;
+          border: none;
+          padding: 1rem 2rem;
+          font-size: 0.7rem;
+          border-radius: 0.4rem;
+          color: #FFF;
+          opacity: 1;
+          text-transform: uppercase;
+          border: 0.1rem solid rgba(255, 255, 255, 0.5);
+          cursor: pointer;
+          font-weight: 400;
+          letter-spacing: 0.2rem;
+          background-color: rgba(255, 255, 255, 0.2);
+          -webkit-transition: all .6s ease-in-out;
+          -moz-transition: all .6s ease-in-out;
+          -o-transition: all .6s ease-in-out;
+          transition: all .6s ease-in-out;
+
+          &:hover {
+            color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(255, 255, 255, 0.6);
+          }
+
+          &:disabled {
+            opacity: 0;
+            cursor: default;
+          }
+        }
+
+        @keyframes test_hover {
+          from {
+            background-position: 0% 100%;
+          }
+          to {
+            background-position: 100% 0%;
+          }
+        }
+      }
+
+      &.waiting {
+        opacity: 0;
+      }
+    }
+
+    .request-error {
+      width: 40rem;
+      height: 10rem;
+      position: absolute;
+      z-index: -1;
+      left: 50%;
+      top: 50%;
+      margin-left: -20rem;
+      margin-top: -5rem;
+      color: #FFFFFF;
+      opacity: 0;
+      -webkit-transition: all .6s ease-in-out;
+      -moz-transition: all .6s ease-in-out;
+      -o-transition: all .6s ease-in-out;
+      transition: all .6s ease-in-out;
+
+      p {
+        text-align: center;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1rem;
+      }
+
+      &.show {
+        opacity: 1;
+      }
+    }
+
+    @media screen and (max-width: 640px) {
+
+      .content {
+        width: 25rem;
+        margin-left: -12.5rem;
+      }
+
+      .request-error {
+        width: 10rem;
+        margin-left: -5rem;
+      }
+    }
+
+    @media screen and (max-width: 400px) {
+
+      .content {
+        width: 100%;
+        margin-left: -50%;
+      }
+    }
+  }
+
+</style>
